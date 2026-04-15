@@ -29,6 +29,60 @@ Some prompts to answer:
 
 You can include a simple diagram or bullet list if helpful.
 
+In real world apps like spotiify recommendations use lots of user behavior, like what you play, like, skip, or add to playlists. They also use information about songs, like genre, mood, tempo, and energy. My simulation will focus more on song attributes and a user taste profile. It will score each song based on how close it is to the user’s vibe and then recommend the highest scoring songs.
+
+Features include in my simulation:
+
+- `Song` uses: title, artist, genre, mood, energy, tempo_bpm, valence, danceability, acousticness
+- `UserProfile` uses: genre, mood, energy, tempo_bpm, valence, danceability, acousticness
+
+Example user profile (taste profile):
+
+```python
+user_profile = {
+    "favorite_genre": "lofi",
+    "favorite_mood": "chill",
+    "target_energy": 0.40,
+    "target_tempo_bpm": 80,
+    "target_valence": 0.60,
+    "target_danceability": 0.60,
+    "target_acousticness": 0.80,
+}
+```
+
+Algorithm Recipe (scoring + ranking):
+
+- Start each song at 0 points.
+- +2.0 points if the song genre matches `favorite_genre`.
+- +1.0 point if the song mood matches `favorite_mood`.
+- For numeric features, give more points when the song is closer to the target.
+  - Similarity for 0.0–1.0 features: `similarity = 1 - abs(song_value - target_value)`
+  - Similarity for tempo: `similarity = 1 - min(abs(song_tempo - target_tempo) / 60, 1)`
+- Add weighted similarity points:
+  - +1.5 \* energy_similarity
+  - +1.0 \* valence_similarity
+  - +0.8 \* danceability_similarity
+  - +0.7 \* acousticness_similarity
+  - +0.8 \* tempo_similarity
+- Ranking rule: score every song, sort by score (highest first), and return the top `k` songs.
+
+Mermaid flowchart:
+
+```mermaid
+flowchart TD
+  A[User Profile] --> B[Read songs.csv]
+  B --> C[Loop through songs]
+  C --> D[Score one song]
+  D --> E[Store score]
+  E --> F[Rank songs by score]
+  F --> G[Top K recommendations]
+```
+
+Possible bias in my plan:
+
+- This system might over-prioritize genre and miss good cross-genre matches.
+- Since the catalog is small, the recommendations might repeat the same artists or styles.
+
 ---
 
 ## Getting Started
@@ -41,6 +95,8 @@ You can include a simple diagram or bullet list if helpful.
    python -m venv .venv
    source .venv/bin/activate      # Mac or Linux
    .venv\Scripts\activate         # Windows
+
+   ```
 
 2. Install dependencies
 
@@ -101,12 +157,11 @@ Write 1 to 2 paragraphs here about what you learned:
 - about how recommenders turn data into predictions
 - about where bias or unfairness could show up in systems like this
 
-
 ---
 
 ## 7. `model_card_template.md`
 
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
+Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}
 
 ```markdown
 # 🎧 Model Card - Music Recommender Simulation
@@ -158,6 +213,7 @@ Describe your dataset.
 Where does your recommender work well
 
 You can think about:
+
 - Situations where the top results "felt right"
 - Particular user profiles it served well
 - Simplicity or transparency benefits
@@ -169,6 +225,7 @@ You can think about:
 Where does your recommender struggle
 
 Some prompts:
+
 - Does it ignore some genres or moods
 - Does it treat all users as if they have the same taste shape
 - Is it biased toward high energy or one genre by default
@@ -181,6 +238,7 @@ Some prompts:
 How did you check your system
 
 Examples:
+
 - You tried multiple user profiles and wrote down whether the results matched your expectations
 - You compared your simulation to what a real app like Spotify or YouTube tends to recommend
 - You wrote tests for your scoring logic
@@ -208,4 +266,4 @@ A few sentences about what you learned:
 - What surprised you about how your system behaved
 - How did building this change how you think about real music recommenders
 - Where do you think human judgment still matters, even if the model seems "smart"
-
+```
