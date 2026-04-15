@@ -132,16 +132,28 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     target_danceability = get_pref("target_danceability", "danceability")
     target_acousticness = get_pref("target_acousticness", "acousticness")
 
+    default_weights = {
+        "genre": 2.0,
+        "mood": 1.0,
+        "energy": 1.5,
+        "valence": 1.0,
+        "danceability": 0.8,
+        "acousticness": 0.7,
+        "tempo": 0.8,
+    }
+    weights = dict(default_weights)
+    weights.update(user_prefs.get("weights", {}) or {})
+
     score = 0.0
     reasons: List[str] = []
 
-    if favorite_genre is not None and song.get("genre") == favorite_genre:
-        score += 2.0
-        reasons.append("genre match (+2.0)")
+    if weights["genre"] and favorite_genre is not None and song.get("genre") == favorite_genre:
+        score += float(weights["genre"])
+        reasons.append(f"genre match (+{float(weights['genre']):.1f})")
 
-    if favorite_mood is not None and song.get("mood") == favorite_mood:
-        score += 1.0
-        reasons.append("mood match (+1.0)")
+    if weights["mood"] and favorite_mood is not None and song.get("mood") == favorite_mood:
+        score += float(weights["mood"])
+        reasons.append(f"mood match (+{float(weights['mood']):.1f})")
 
     # Similarity helpers
     def similarity_01(song_value: float, target_value: float) -> float:
@@ -153,31 +165,31 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     # Weighted numeric similarities (only if the target is provided)
     if target_energy is not None:
         sim = similarity_01(float(song["energy"]), float(target_energy))
-        pts = 1.5 * sim
+        pts = float(weights["energy"]) * sim
         score += pts
         reasons.append(f"energy close (+{pts:.2f})")
 
     if target_valence is not None:
         sim = similarity_01(float(song["valence"]), float(target_valence))
-        pts = 1.0 * sim
+        pts = float(weights["valence"]) * sim
         score += pts
         reasons.append(f"valence close (+{pts:.2f})")
 
     if target_danceability is not None:
         sim = similarity_01(float(song["danceability"]), float(target_danceability))
-        pts = 0.8 * sim
+        pts = float(weights["danceability"]) * sim
         score += pts
         reasons.append(f"danceability close (+{pts:.2f})")
 
     if target_acousticness is not None:
         sim = similarity_01(float(song["acousticness"]), float(target_acousticness))
-        pts = 0.7 * sim
+        pts = float(weights["acousticness"]) * sim
         score += pts
         reasons.append(f"acousticness close (+{pts:.2f})")
 
     if target_tempo is not None:
         sim = tempo_similarity(float(song["tempo_bpm"]), float(target_tempo))
-        pts = 0.8 * sim
+        pts = float(weights["tempo"]) * sim
         score += pts
         reasons.append(f"tempo close (+{pts:.2f})")
 
